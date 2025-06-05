@@ -105,3 +105,10 @@ peepdf==0.4.3
 viper==0.1
 malduck==4.1.0
 volatility3==2.5.0
+
+# Additional Binary Analysis
+angr==9.2.86
+pwntools==4.9.0
+r2pipe==1.6.1
+barf==0.5.1
+manticore==0.3.10
