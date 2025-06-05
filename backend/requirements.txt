@@ -1,15 +1,16 @@
 # fastapi
 uvicorn
-flask
-python-multipart
+flask==2.3.3
+python-multipart==0.0.6
 celery
 redis
-pefile
-lief
-capstone
-pycryptodome
-oletools
-pdfid
-pwntools
-flask-cors
+pefile==2023.2.7
+lief==0.13.2
+capstone==4.0.2
+pycryptodome==3.19.0
+oletools==0.60.1
+pdfid==0.2.5
+pwntools==4.9.0
+flask-cors==4.0.0
+gunicorn==21.2.0
 
