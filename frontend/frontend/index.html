@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reverse Engineering Uploader</title>
+  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/48/Markdown-mark.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2ecc71;
+      --bg-dark: #1a1a1a;
+      --bg-darker: #141414;
+      --bg-light: #2a2a2a;
+      --accent: #3498db;
+      --error: #e74c3c;
+      --success: #2ecc71;
+      --text: #e0e0e0;
+      --border: #333;
+    }
+    body {
+      background: var(--bg-darker);
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .navbar {
+      background: var(--bg-dark) !important;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+    }
+    .navbar-brand {
+      color: var(--text) !important;
+      font-size: 1.5rem;
+    }
+    .nav-link {
+      color: var(--text) !important;
+    }
+    .nav-link:hover {
+      color: var(--accent) !important;
+    }
+    .card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+      background: var(--bg-light);
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      padding: 1rem;
+    }
+    .form-control {
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .form-control:focus {
+      background: var(--bg-darker);
+      border-color: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.15);
+    }
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn-outline-primary:hover {
+      background: var(--primary);
+      color: var(--bg-darker);
+    }
+    .btn-outline-danger {
+      color: var(--error);
+      border-color: var(--error);
+    }
+    .btn-outline-danger:hover {
+      background: var(--error);
+      color: var(--bg-darker);
+    }
+    #output-box {
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      resize: none;
+      min-height: 200px;
+      padding: 1rem;
+    }
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: var(--bg-dark);
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #drop-zone:hover {
+      border-color: var(--accent);
+      background: var(--bg-light);
+    }
+    .drop-zone-content {
+      max-width: 400px;
+    }
+    .supported-files {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .badge {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border: 1px solid var(--border);
+    }
+    .badge i {
+      margin-right: 0.25rem;
+    }
+    .progress {
+      background: var(--bg-darker);
+      height: 4px;
+    }
+    .progress-bar {
+      background: var(--primary);
+    }
+    .stats-card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      background: var(--bg-darker);
+    }
+    .github-btn {
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      transition: all 0.3s;
+    }
+    .github-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--bg-light);
+    }
+    .input-group-text {
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .alert {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .alert-danger {
+      border-color: var(--error);
+      color: var(--error);
+    }
+    .alert-success {
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .nav-tabs .nav-link {
+      border: none;
+      color: var(--text);
+      opacity: 0.7;
+    }
+    .nav-tabs .nav-link.active {
+      background: transparent;
+      color: var(--primary);
+      opacity: 1;
+      border-bottom: 2px solid var(--primary);
+    }
+    .nav-tabs .nav-link:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        <i class="bi bi-code-square"></i> Reverse Engineering Tool
+      </a>
+      <div class="d-flex">
+        <a href="https://github.com/yourusername/reverse-engineering-uploader" target="_blank" class="github-btn">
+          <i class="bi bi-github"></i> GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card mb-4">
+          <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#file-tab">
+                  <i class="bi bi-file-earmark"></i> File Upload
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#url-tab">
+                  <i class="bi bi-link-45deg"></i> URL Input
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div class="card-body">
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="file-tab">
+                <label id="drop-zone" class="mb-3">
+                  <div class="drop-zone-content">
+                    <i class="bi bi-cloud-upload display-4 mb-3"></i>
+                    <h5 class="mb-2">Drag & Drop your file here</h5>
+                    <p class="text-muted mb-3">or click to select a file</p>
+                    <div class="supported-files mb-3">
+                      <span class="badge bg-dark me-2"><i class="bi bi-file-text"></i> TXT</span>
+                      <span class="badge bg-dark me-2"><i class="bi bi-file-earmark-code"></i> MD</span>
+                      <span class="badge bg-dark me-2"><i class="bi bi-file-earmark-binary"></i> BIN</span>
+                      <span class="badge bg-dark"><i class="bi bi-file-earmark"></i> Other</span>
+                    </div>
+                    <p class="text-muted small">Maximum file size: 10MB</p>
+                  </div>
+                  <input type="file" id="file-input" class="d-none" />
+                </label>
+              </div>
+              <div class="tab-pane fade" id="url-tab">
+                <div class="input-group mb-3">
+                  <input type="url" class="form-control" id="url-input" placeholder="Enter URL to analyze...">
+                  <button class="btn btn-outline-primary" type="button" id="url-submit">
+                    <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="progress-bar" class="progress mb-3 d-none">
+              <div id="progress-bar-inner" class="progress-bar" role="progressbar"></div>
+            </div>
+            <div id="message" class="alert d-none"></div>
+            <textarea id="output-box" class="form-control mb-3" placeholder="Output will appear here..." readonly></textarea>
+            <div class="d-flex gap-2 flex-wrap">
+              <button id="upload-btn" class="btn btn-outline-primary" disabled>
+                <i class="bi bi-upload"></i> Upload
+              </button>
+              <button id="download-btn" class="btn btn-outline-primary" disabled>
+                <i class="bi bi-download"></i> Download
+              </button>
+              <button id="json-btn" class="btn btn-outline-primary" disabled>
+                <i class="bi bi-filetype-json"></i> JSON
+              </button>
+              <button id="csv-btn" class="btn btn-outline-primary" disabled>
+                <i class="bi bi-filetype-csv"></i> CSV
+              </button>
+              <button id="copy-btn" class="btn btn-outline-primary" disabled>
+                <i class="bi bi-clipboard"></i> Copy
+              </button>
+              <button id="clear-btn" class="btn btn-outline-danger" disabled>
+                <i class="bi bi-trash"></i> Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="bi bi-search"></i> Search
+          </div>
+          <div class="card-body">
+            <input id="search-box" type="text" class="form-control" placeholder="Search output...">
+          </div>
+        </div>
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="bi bi-info-circle"></i> File Information
+          </div>
+          <div class="card-body">
+            <div id="file-info" class="d-none">
+              <p><strong>File:</strong> <span id="file-info-name"></span></p>
+              <p><strong>Type:</strong> <span id="file-info-type"></span></p>
+              <p><strong>Size:</strong> <span id="file-info-size"></span></p>
+              <p><strong>SHA-256:</strong> <span id="file-info-hash"></span></p>
+              <p><strong>Last upload:</strong> <span id="file-info-date"></span></p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <i class="bi bi-graph-up"></i> Statistics
+          </div>
+          <div class="card-body">
+            <div class="stats-card">
+              <div class="stat-item" id="line-count">Lines: 0</div>
+              <div class="stat-item" id="word-count">Words: 0</div>
+              <div class="stat-item" id="output-size">Size: 0 KB</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // --- Utility ---
+    const $ = id => document.getElementById(id);
+    let selectedFile = null, lastOutput = '', lastMeta = {}, fontSize = 1, outputVisible = true;
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+    // File info
+    async function getFileHash(file) {
+      if (!window.crypto?.subtle) return 'Unavailable';
+      const buf = await file.arrayBuffer();
+      const hash = await crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    function showFileInfo(file) {
+      $('file-info-name').textContent = file.name;
+      $('file-info-type').textContent = file.type || 'Unknown';
+      $('file-info-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+      $('file-info').style.display = 'block';
+      getFileHash(file).then(hash => $('file-info-hash').textContent = hash);
+      $('file-info-date').textContent = new Date().toLocaleString();
+    }
+    function hideFileInfo() { $('file-info').style.display = 'none'; }
+
+    // File select
+    function handleFileSelect(file) {
+      if (file.size > MAX_FILE_SIZE) {
+        $('message').textContent = 'File too large (max 10 MB).'; $('message').className = 'error';
+        $('upload-btn').disabled = true; $('clear-btn').disabled = false; hideFileInfo(); return;
+      }
+      $('message').textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(1)} KB)`; $('message').className = '';
+      $('upload-btn').disabled = false; $('clear-btn').disabled = false; showFileInfo(file);
+    }
+    $('drop-zone').addEventListener('drop', e => {
+      e.preventDefault(); $('drop-zone').classList.remove('hover');
+      if (e.dataTransfer.files.length > 0) { selectedFile = e.dataTransfer.files[0]; handleFileSelect(selectedFile); }
+    });
+    $('file-input').addEventListener('change', () => {
+      if ($('file-input').files.length > 0) { selectedFile = $('file-input').files[0]; handleFileSelect(selectedFile); }
+    });
+
+    // Output controls
+    function updateCopyBtn() {
+      $('copy-btn').disabled = !lastOutput; $('json-btn').disabled = !lastOutput; $('csv-btn').disabled = !lastOutput;
+    }
+    $('copy-btn').addEventListener('click', () => {
+      if (!lastOutput) return;
+      navigator.clipboard.writeText(lastOutput).then(() => {
+        $('copy-btn').textContent = 'Copied!'; setTimeout(() => { $('copy-btn').textContent = 'Copy Output'; }, 1200);
+      });
+    });
+    function setFontSize(mult) {
+      fontSize = Math.max(0.7, Math.min(2, fontSize + mult));
+      $('output-box').style.fontSize = fontSize + 'rem';
+      $('preview-content').style.fontSize = (fontSize * 0.98) + 'rem';
+    }
+    $('font-inc').onclick = () => setFontSize(0.1);
+    $('font-dec').onclick = () => setFontSize(-0.1);
+    $('toggle-output').onclick = () => {
+      outputVisible = !outputVisible;
+      $('output-box').classList.toggle('hidden', !outputVisible);
+      $('output-preview').classList.toggle('hidden', !outputVisible);
+      $('toggle-output').textContent = outputVisible ? 'Hide Output' : 'Show Output';
+    };
+
+    // Search/filter
+    $('search-box').addEventListener('input', () => {
+      const val = $('search-box').value.trim();
+      if (!val) { $('output-box').value = lastOutput || ''; updateLineWordCount(); updatePreview(); return; }
+      const lines = (lastOutput || '').split('\n');
+      const filtered = lines.filter(line => line.toLowerCase().includes(val.toLowerCase()));
+      $('output-box').value = filtered.join('\n');
+      updateLineWordCount(filtered.length); updatePreview(val);
+    });
+
+    // Line/word count
+    function updateLineWordCount(count) {
+      const lines = ($('output-box').value || '').split('\n').filter(Boolean);
+      const words = ($('output-box').value || '').split(/\s+/).filter(Boolean);
+      $('line-count').textContent = `Lines: ${typeof count === 'number' ? count : lines.length}`;
+      $('word-count').textContent = `Words: ${words.length}`;
+      $('output-size').textContent = `Output size: ${($('output-box').value.length / 1024).toFixed(2)} KB`;
+    }
+    $('output-box').addEventListener('input', () => updateLineWordCount());
+
+    // Theme toggle
+    let darkTheme = true;
+    $('theme-toggle').onclick = () => {
+      darkTheme = !darkTheme;
+      document.body.style.background = darkTheme ? "#181c1f" : "#f8f8f8";
+      document.body.style.color = darkTheme ? "#eee" : "#222";
+      $('theme-toggle').textContent = darkTheme ? "🌙" : "☀️";
+      document.querySelectorAll('input, textarea').forEach(el => {
+        el.style.background = darkTheme ? "#181c1f" : "#fff";
+        el.style.color = darkTheme ? "#eee" : "#222";
+      });
+    };
+
+    // Output preview
+    function updatePreview(searchTerm) {
+      const lines = ($('output-box').value || '').split('\n').slice(0, 10);
+      let html = lines.map(line => searchTerm ? line.replace(new RegExp(`(${searchTerm})`, 'gi'), '<span class="highlight">$1</span>') : line).join('\n');
+      $('preview-content').innerHTML = html;
+      $('output-preview').classList.toggle('hidden', !outputVisible || !$('output-box').value);
+    }
+
+    // Export as JSON/CSV
+    $('json-btn').onclick = () => {
+      if (!lastOutput) return;
+      const blob = new Blob([JSON.stringify({ output: lastOutput }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = (lastMeta.filename ? lastMeta.filename.replace(/\.[^/.]+$/, "") : "output") + "_analysis.json";
+      document.body.appendChild(a); a.click(); setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+    };
+    $('csv-btn').onclick = () => {
+      if (!lastOutput) return;
+      const lines = lastOutput.split('\n').map(line => `"${line.replace(/"/g, '""')}"`);
+      const csv = lines.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = (lastMeta.filename ? lastMeta.filename.replace(/\.[^/.]+$/, "") : "output") + "_analysis.csv";
+      document.body.appendChild(a); a.click(); setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+    };
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey && e.key === 'f') { e.preventDefault(); $('search-box').focus(); }
+      if (e.ctrlKey && e.key === 'c') { e.preventDefault(); $('copy-btn').click(); }
+      if (e.altKey && e.key.toLowerCase() === 'u') { e.preventDefault(); $('upload-btn').click(); }
+      if (e.altKey && e.key.toLowerCase() === 'd') { e.preventDefault(); $('download-btn').click(); }
+    });
+
+    // Upload
+    $('upload-btn').onclick = () => {
+      if (!selectedFile) return;
+      const formData = new FormData(); formData.append('file', selectedFile);
+      const xhr = new XMLHttpRequest(); xhr.open('POST', 'http://localhost:8000/upload/', true);
+      let startTime = Date.now();
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          $('progress-bar').style.display = 'block';
+          $('progress-bar-inner').style.width = (e.loaded / e.total) * 100 + '%';
+        }
+      };
+      xhr.onloadstart = () => {
+        $('progress-bar').style.display = 'block'; $('progress-bar-inner').style.width = '0%';
+        $('message').textContent = 'Uploading...'; $('message').className = '';
+        $('output-box').value = ''; lastOutput = ''; lastMeta = {};
+        $('download-btn').disabled = true; $('clear-btn').disabled = false;
+        updateCopyBtn(); updateLineWordCount(); updatePreview();
+      };
+      xhr.onload = () => {
+        $('progress-bar').style.display = 'none';
+        let res = {};
+        try { res = JSON.parse(xhr.responseText); } catch (e) { res = { message: 'Invalid server response', output: '' }; }
+        if (xhr.status === 200) {
+          $('message').className = 'success';
+          let elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+          $('message').textContent = (res.message || 'File uploaded and processed successfully!') +
+            (res.filesize ? ` | Size: ${(res.filesize/1024).toFixed(1)} KB` : '') +
+            ` | Time: ${elapsed}s`;
+          lastOutput = (res.tool ? `[${res.tool}] ` : '') + (res.output || JSON.stringify(res, null, 2));
+          lastMeta = res;
+          $('output-box').value = lastOutput;
+          $('download-btn').disabled = !lastOutput; $('clear-btn').disabled = false;
+          $('output-box').scrollTop = $('output-box').scrollHeight;
+          updateCopyBtn(); updateLineWordCount(); updatePreview();
+        } else {
+          $('message').className = 'error';
+          $('message').textContent = `Upload failed: ${xhr.statusText}`;
+          $('output-box').value = ''; lastOutput = ''; lastMeta = {};
+          $('download-btn').disabled = true; $('clear-btn').disabled = false;
+          updateCopyBtn(); updateLineWordCount(); updatePreview();
+        }
+      };
+      xhr.onerror = () => {
+        $('progress-bar').style.display = 'none';
+        $('message').className = 'error'; $('message').textContent = 'Upload error occurred.';
+        $('output-box').value = ''; lastOutput = ''; lastMeta = {};
+        $('download-btn').disabled = true; $('clear-btn').disabled = false;
+        updateCopyBtn(); updateLineWordCount(); updatePreview();
+      };
+      xhr.send(formData);
+    };
+
+    // Download
+    $('download-btn').onclick = () => {
+      if (!lastOutput) return;
+      const blob = new Blob([lastOutput], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = (lastMeta.filename ? lastMeta.filename.replace(/\.[^/.]+$/, "") : "output") + "_analysis.txt";
+      document.body.appendChild(a); a.click(); setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+    };
+
+    // Clear
+    $('clear-btn').onclick = () => {
+      selectedFile = null; lastOutput = ''; lastMeta = {}; $('file-input').value = '';
+      $('output-box').value = ''; $('message').textContent = ''; $('message').className = '';
+      $('upload-btn').disabled = true; $('download-btn').disabled = true; $('clear-btn').disabled = true;
+      $('progress-bar').style.display = 'none'; hideFileInfo(); updateCopyBtn(); $('search-box').value = '';
+      updateLineWordCount(); updatePreview();
+    };
+
+    // Initial state
+    updateCopyBtn(); updateLineWordCount(); updatePreview();
+
+    // Add URL handling
+    const urlInput = document.getElementById('url-input');
+    const urlSubmit = document.getElementById('url-submit');
+    
+    urlSubmit.addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      if (!url) {
+        showMessage('Please enter a valid URL', 'error');
+        return;
+      }
+      
+      // Show progress
+      document.getElementById('progress-bar').classList.remove('d-none');
+      document.getElementById('progress-bar-inner').style.width = '0%';
+      
+      // Simulate progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 5;
+        document.getElementById('progress-bar-inner').style.width = `${progress}%`;
+        if (progress >= 100) clearInterval(interval);
+      }, 100);
+      
+      // Send URL to backend
+      fetch('http://localhost:8000/analyze-url/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        clearInterval(interval);
+        document.getElementById('progress-bar').classList.add('d-none');
+        
+        if (data.error) {
+          showMessage(data.error, 'error');
+          return;
+        }
+        
+        showMessage('URL analyzed successfully!', 'success');
+        document.getElementById('output-box').value = data.output;
+        updateStats();
+        enableButtons();
+      })
+      .catch(error => {
+        clearInterval(interval);
+        document.getElementById('progress-bar').classList.add('d-none');
+        showMessage('Error analyzing URL: ' + error.message, 'error');
+      });
+    });
+    
+    function showMessage(text, type) {
+      const message = document.getElementById('message');
+      message.textContent = text;
+      message.className = `alert alert-${type === 'error' ? 'danger' : 'success'} d-block`;
+    }
+    
+    function updateStats() {
+      const output = document.getElementById('output-box').value;
+      const lines = output.split('\n').length;
+      const words = output.split(/\s+/).filter(Boolean).length;
+      const size = (output.length / 1024).toFixed(2);
+      
+      document.getElementById('line-count').textContent = `Lines: ${lines}`;
+      document.getElementById('word-count').textContent = `Words: ${words}`;
+      document.getElementById('output-size').textContent = `Size: ${size} KB`;
+    }
+    
+    function enableButtons() {
+      document.getElementById('download-btn').disabled = false;
+      document.getElementById('json-btn').disabled = false;
+      document.getElementById('csv-btn').disabled = false;
+      document.getElementById('copy-btn').disabled = false;
+      document.getElementById('clear-btn').disabled = false;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# fastapi
+uvicorn
+flask
+python-multipart
+celery
+redis
+pefile
+lief
+capstone
+pycryptodome
+oletools
+pdfid
+pwntools
+flask-cors
+
