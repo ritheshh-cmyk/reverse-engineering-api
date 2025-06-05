@@ -97,3 +97,11 @@ apkleaks==2.6.0
 jadx==1.4.7
 dex2jar==2.0
 smalisca==2.0.0
+
+# Malware Analysis
+# Malware Analysis
+peframe==0.3.0
+peepdf==0.4.3
+viper==0.1
+malduck==4.1.0
+volatility3==2.5.0
