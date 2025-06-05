@@ -11,28 +11,6 @@ RUN apt-get update && \
     python3-dev \
     binwalk \
     curl \
-    wget \
-    unzip \
-    git \
-    cmake \
-    pkg-config \
-    autoconf \
-    automake \
-    libtool \
-    bison \
-    flex \
-    libssl-dev \
-    zlib1g-dev \
-    libffi-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev \
-    libncurses5-dev \
-    libncursesw5-dev \
-    liblzma-dev \
-    libgdbm-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache

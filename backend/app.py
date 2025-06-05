@@ -5,10 +5,6 @@ import subprocess
 import tempfile
 import logging
 import pefile
-import lief
-from capstone import *
-import oletools.olevba
-import pdfid
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,13 +52,6 @@ def upload_file():
                 'timestamp': pe.FILE_HEADER.TimeDateStamp,
                 'sections': [section.Name.decode().rstrip('\x00') for section in pe.sections]
             }
-        except:
-            pass
-
-        # Try PDF analysis
-        try:
-            pdf_results = pdfid.PDFiD(tmp_path)
-            analysis_results['pdf_info'] = pdf_results
         except:
             pass
 
