@@ -81,3 +81,11 @@ pyshark==0.6
 mitmproxy==10.1.5
 frida==16.1.4
 frida-tools==12.0.0
+
+# Android Analysis
+# Android Analysis
+androguard==3.3.5
+apkleaks==2.6.0
+jadx==1.4.7
+dex2jar==2.0
+smalisca==2.0.0
