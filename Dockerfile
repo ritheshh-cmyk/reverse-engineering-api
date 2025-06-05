@@ -9,8 +9,46 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
+    python3-pip \
     binwalk \
+    radare2 \
+    gdb \
+    upx \
+    objdump \
+    strace \
+    ltrace \
+    valgrind \
+    qemu \
+    bochs \
+    tcpdump \
+    netcat \
+    nmap \
+    file \
+    hexdump \
+    readelf \
+    wireshark \
+    ngrep \
+    scapy \
+    ettercap-graphical \
+    procps \
+    p7zip-full \
+    unzip \
     curl \
+    wget \
+    git \
+    cmake \
+    libcapstone-dev \
+    libunicorn-dev \
+    libkeystone-dev \
+    libffi-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libpcap-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
