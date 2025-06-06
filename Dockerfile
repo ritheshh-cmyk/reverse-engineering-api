@@ -19,21 +19,8 @@ RUN apt-get update && \
     build-essential \
     python3-dev \
     python3-pip \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first to leverage Docker cache
-COPY backend/requirements.txt .
-
-# Install Python dependencies in stages
-RUN pip install --no-cache-dir flask==2.3.3 flask-cors==4.0.0 python-multipart==0.0.6 gunicorn==21.2.0 Werkzeug==2.3.7 click==8.1.7 itsdangerous==2.1.2 Jinja2==3.1.2 MarkupSafe==2.1.3 && \
-    pip install --no-cache-dir keystone-engine==0.9.2 unicorn==2.0.1 scapy==2.5.0 requests==2.31.0 pycryptodome==3.19.0 cryptography==41.0.3 python-magic==0.4.27 olefile==0.46 tqdm==4.66.1 colorama==0.4.6 pygments==2.16.1 rich==13.5.2
-
-# Install angr separately with its dependencies
-RUN pip install --no-cache-dir angr==9.2.86
-
-# Install analysis tools
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    git \
+    cmake \
     binwalk \
     gdb \
     strace \
@@ -48,13 +35,6 @@ RUN apt-get update && \
     unzip \
     curl \
     wget \
-    git \
-    cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install development libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     libcapstone-dev \
     libunicorn-dev \
     libffi-dev \
@@ -75,6 +55,14 @@ RUN apt-get update && \
     libz3-dev \
     libkeystone-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first to leverage Docker cache
+COPY backend/requirements.txt .
+
+# Install Python dependencies in stages
+RUN pip install --no-cache-dir flask==2.3.3 flask-cors==4.0.0 python-multipart==0.0.6 gunicorn==21.2.0 Werkzeug==2.3.7 click==8.1.7 itsdangerous==2.1.2 Jinja2==3.1.2 MarkupSafe==2.1.3 && \
+    pip install --no-cache-dir keystone-engine==0.9.2 unicorn==2.0.1 scapy==2.5.0 requests==2.31.0 pycryptodome==3.19.0 cryptography==41.0.3 python-magic==0.4.27 olefile==0.46 tqdm==4.66.1 colorama==0.4.6 pygments==2.16.1 rich==13.5.2 && \
+    pip install --no-cache-dir angr==9.2.86
 
 # Install additional tools from source
 RUN cd /tmp && \
