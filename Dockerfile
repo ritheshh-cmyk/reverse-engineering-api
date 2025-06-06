@@ -1,26 +1,4 @@
-# Build stage
-FROM python:3.10-slim as builder
-
-# Set working directory
-WORKDIR /build
-
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    python3-pip \
-    git \
-    cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first to leverage Docker cache
-COPY backend/requirements.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Runtime stage
+# Use Python 3.10 slim as base image
 FROM python:3.10-slim
 
 # Set working directory
@@ -35,18 +13,21 @@ ENV RUNLEVEL=1
 RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && \
     chmod +x /usr/sbin/policy-rc.d
 
-# Install system dependencies in stages
+# Install core dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    gnupg2 \
+    build-essential \
+    python3-dev \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Add Debian repositories
-RUN echo "deb http://deb.debian.org/debian bullseye main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian bullseye-updates main contrib non-free" >> /etc/apt/sources.list
+# Copy requirements first to leverage Docker cache
+COPY backend/requirements.txt .
 
-# Install runtime dependencies
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install analysis tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     binwalk \
@@ -63,6 +44,13 @@ RUN apt-get update && \
     unzip \
     curl \
     wget \
+    git \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libcapstone-dev \
     libunicorn-dev \
     libffi-dev \
@@ -95,10 +83,6 @@ RUN cd /tmp && \
     tar xf upx-4.2.1-amd64_linux.tar.xz && \
     mv upx-4.2.1-amd64_linux/upx /usr/local/bin/ && \
     rm -rf upx-4.2.1-amd64_linux*
-
-# Copy Python packages from builder
-COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy the application
 COPY backend/ .
