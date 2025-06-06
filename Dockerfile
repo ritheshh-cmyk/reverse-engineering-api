@@ -13,6 +13,11 @@ ENV RUNLEVEL=1
 RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && \
     chmod +x /usr/sbin/policy-rc.d
 
+# Add Debian repositories
+RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list
+
 # Install Python and build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -43,23 +48,38 @@ RUN apt-get update && \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install development libraries
+# Install basic development libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libcapstone-dev \
     libunicorn-dev \
     libffi-dev \
     libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install XML and compression libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libxml2-dev \
     libxslt1-dev \
     zlib1g-dev \
     libbz2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install system libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libreadline-dev \
     libsqlite3-dev \
     libpcap-dev \
     binutils \
     libmagic1 \
     libmagic-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install analysis libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libyara-dev \
     libfrida-dev \
     libradare2-dev \
