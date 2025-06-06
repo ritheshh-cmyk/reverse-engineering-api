@@ -1,5 +1,5 @@
-# Use Python 3.10 slim as base image
-FROM python:3.10-slim
+# Use Python 3.10 slim bullseye as base image
+FROM python:3.10-slim-bullseye
 
 # Set working directory
 WORKDIR /app
@@ -9,19 +9,33 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV INITRD=No
 ENV RUNLEVEL=1
 
-# Install system dependencies
+# Create a policy file to prevent service starts
+RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && \
+    chmod +x /usr/sbin/policy-rc.d
+
+# Install system dependencies in stages
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gnupg2 \
     software-properties-common \
-    && echo "deb http://deb.debian.org/debian bullseye main contrib non-free" >> /etc/apt/sources.list \
-    && echo "deb http://deb.debian.org/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list \
-    && echo "deb http://deb.debian.org/debian bullseye-updates main contrib non-free" >> /etc/apt/sources.list \
-    && apt-get update && \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Debian repositories
+RUN echo "deb http://deb.debian.org/debian bullseye main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bullseye-updates main contrib non-free" >> /etc/apt/sources.list
+
+# Install build dependencies
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
     python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install analysis tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     binwalk \
     gdb \
     strace \
@@ -38,6 +52,11 @@ RUN apt-get update && \
     wget \
     git \
     cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libcapstone-dev \
     libunicorn-dev \
     libffi-dev \
