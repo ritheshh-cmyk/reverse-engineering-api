@@ -45,6 +45,25 @@ RUN apt-get update && \
     libsqlite3-dev \
     libpcap-dev \
     binutils \
+    libmagic1 \
+    libmagic-dev \
+    libyara-dev \
+    libfrida-dev \
+    libradare2-dev \
+    libz3-dev \
+    libkeystone-dev \
+    libcapstone-dev \
+    libunicorn-dev \
+    libffi-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libpcap-dev \
+    binutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install additional tools from source
@@ -62,8 +81,11 @@ RUN cd /tmp && \
 # Copy requirements first to leverage Docker cache
 COPY backend/requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies in stages
+RUN pip install --no-cache-dir -r requirements.txt || \
+    (echo "Failed to install all packages, trying core packages first..." && \
+     pip install --no-cache-dir flask==2.3.3 flask-cors==4.0.0 python-multipart==0.0.6 gunicorn==21.2.0 Werkzeug==2.3.7 click==8.1.7 itsdangerous==2.1.2 Jinja2==3.1.2 MarkupSafe==2.1.3 && \
+     pip install --no-cache-dir -r requirements.txt)
 
 # Copy the rest of the application
 COPY backend/ .
