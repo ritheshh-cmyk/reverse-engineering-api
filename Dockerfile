@@ -18,7 +18,7 @@ RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free" >> /e
     echo "deb http://deb.debian.org/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list && \
     echo "deb http://deb.debian.org/debian bookworm-updates main contrib non-free" >> /etc/apt/sources.list
 
-# Install Python and build dependencies
+# Batch 1: Core build tools
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3.10 \
@@ -27,11 +27,6 @@ RUN apt-get update && \
     build-essential \
     git \
     cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install core system tools
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     binwalk \
     gdb \
     strace \
@@ -41,45 +36,35 @@ RUN apt-get update && \
     netcat-openbsd \
     nmap \
     file \
+    && rm -rf /var/lib/apt/lists/*
+
+# Batch 2: System utilities
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     procps \
     p7zip-full \
     unzip \
     curl \
     wget \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install basic development libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     libcapstone-dev \
     libunicorn-dev \
     libffi-dev \
     libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install XML and compression libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     libxml2-dev \
     libxslt1-dev \
     zlib1g-dev \
     libbz2-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install system libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     libreadline-dev \
     libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Batch 3: Analysis libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libpcap-dev \
     binutils \
     libmagic1 \
     libmagic-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install analysis libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     libyara-dev \
     libfrida-dev \
     libradare2-dev \
@@ -90,14 +75,33 @@ RUN apt-get update && \
 # Copy requirements first to leverage Docker cache
 COPY backend/requirements.txt .
 
-# Install Python dependencies in stages
-RUN pip3 install --no-cache-dir flask==2.3.3 flask-cors==4.0.0 python-multipart==0.0.6 gunicorn==21.2.0 Werkzeug==2.3.7 click==8.1.7 itsdangerous==2.1.2 Jinja2==3.1.2 MarkupSafe==2.1.3
+# Batch 4: Core Python packages
+RUN pip3 install --no-cache-dir \
+    flask==2.3.3 \
+    flask-cors==4.0.0 \
+    python-multipart==0.0.6 \
+    gunicorn==21.2.0 \
+    Werkzeug==2.3.7 \
+    click==8.1.7 \
+    itsdangerous==2.1.2 \
+    Jinja2==3.1.2 \
+    MarkupSafe==2.1.3 \
+    keystone-engine==0.9.2 \
+    unicorn==2.0.1 \
+    scapy==2.5.0 \
+    requests==2.31.0 \
+    pycryptodome==3.19.0 \
+    cryptography==41.0.3
 
-# Install analysis tools
-RUN pip3 install --no-cache-dir keystone-engine==0.9.2 unicorn==2.0.1 scapy==2.5.0 requests==2.31.0 pycryptodome==3.19.0 cryptography==41.0.3 python-magic==0.4.27 olefile==0.46 tqdm==4.66.1 colorama==0.4.6 pygments==2.16.1 rich==13.5.2
-
-# Install angr separately
-RUN pip3 install --no-cache-dir angr==9.2.86
+# Batch 5: Analysis Python packages
+RUN pip3 install --no-cache-dir \
+    python-magic==0.4.27 \
+    olefile==0.46 \
+    tqdm==4.66.1 \
+    colorama==0.4.6 \
+    pygments==2.16.1 \
+    rich==13.5.2 \
+    angr==9.2.86
 
 # Install additional tools from source
 RUN cd /tmp && \
