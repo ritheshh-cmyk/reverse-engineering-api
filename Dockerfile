@@ -1,5 +1,5 @@
-# Use Python 3.10 slim bullseye as base image
-FROM python:3.10-slim-bullseye
+# Use Python 3.10 slim as base image
+FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
@@ -17,7 +17,6 @@ RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gnupg2 \
-    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
 # Add Debian repositories
