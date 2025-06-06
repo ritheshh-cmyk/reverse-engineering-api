@@ -42,7 +42,7 @@ ropper==1.13.13
 ropgadget==6.8
 z3-solver==4.12.2.0
 r2pipe==1.6.1
-barf==0.5.1
+barf==0.6.0
 manticore==0.3.10
 
 # Android Analysis
