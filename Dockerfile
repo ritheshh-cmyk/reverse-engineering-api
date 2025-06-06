@@ -1,4 +1,26 @@
-# Use Python 3.10 slim as base image
+# Build stage
+FROM python:3.10-slim as builder
+
+# Set working directory
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    python3-pip \
+    git \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first to leverage Docker cache
+COPY backend/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Runtime stage
 FROM python:3.10-slim
 
 # Set working directory
@@ -24,15 +46,7 @@ RUN echo "deb http://deb.debian.org/debian bullseye main contrib non-free" >> /e
     echo "deb http://deb.debian.org/debian-security bullseye-security main contrib non-free" >> /etc/apt/sources.list && \
     echo "deb http://deb.debian.org/debian bullseye-updates main contrib non-free" >> /etc/apt/sources.list
 
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install analysis tools
+# Install runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     binwalk \
@@ -49,13 +63,6 @@ RUN apt-get update && \
     unzip \
     curl \
     wget \
-    git \
-    cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install development libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
     libcapstone-dev \
     libunicorn-dev \
     libffi-dev \
@@ -89,16 +96,11 @@ RUN cd /tmp && \
     mv upx-4.2.1-amd64_linux/upx /usr/local/bin/ && \
     rm -rf upx-4.2.1-amd64_linux*
 
-# Copy requirements first to leverage Docker cache
-COPY backend/requirements.txt .
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Install Python dependencies in stages
-RUN pip install --no-cache-dir -r requirements.txt || \
-    (echo "Failed to install all packages, trying core packages first..." && \
-     pip install --no-cache-dir flask==2.3.3 flask-cors==4.0.0 python-multipart==0.0.6 gunicorn==21.2.0 Werkzeug==2.3.7 click==8.1.7 itsdangerous==2.1.2 Jinja2==3.1.2 MarkupSafe==2.1.3 && \
-     pip install --no-cache-dir -r requirements.txt)
-
-# Copy the rest of the application
+# Copy the application
 COPY backend/ .
 
 # Set Python path
