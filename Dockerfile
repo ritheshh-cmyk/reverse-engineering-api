@@ -4,6 +4,11 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /app
 
+# Prevent system services from starting
+ENV DEBIAN_FRONTEND=noninteractive
+ENV INITRD=No
+ENV RUNLEVEL=1
+
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -52,18 +57,6 @@ RUN apt-get update && \
     libradare2-dev \
     libz3-dev \
     libkeystone-dev \
-    libcapstone-dev \
-    libunicorn-dev \
-    libffi-dev \
-    libssl-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    zlib1g-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev \
-    libpcap-dev \
-    binutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install additional tools from source
