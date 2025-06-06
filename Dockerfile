@@ -1,5 +1,5 @@
-# Use Python 3.10 slim as base image
-FROM python:3.10-slim
+# Use Python 3.10 as base image
+FROM python:3.10
 
 # Set working directory
 WORKDIR /app
@@ -13,7 +13,7 @@ ENV RUNLEVEL=1
 RUN echo '#!/bin/sh\nexit 101' > /usr/sbin/policy-rc.d && \
     chmod +x /usr/sbin/policy-rc.d
 
-# Install core dependencies
+# Install build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -21,6 +21,11 @@ RUN apt-get update && \
     python3-pip \
     git \
     cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install core system tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     binwalk \
     gdb \
     strace \
@@ -35,6 +40,11 @@ RUN apt-get update && \
     unzip \
     curl \
     wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development libraries
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     libcapstone-dev \
     libunicorn-dev \
     libffi-dev \
@@ -60,9 +70,13 @@ RUN apt-get update && \
 COPY backend/requirements.txt .
 
 # Install Python dependencies in stages
-RUN pip install --no-cache-dir flask==2.3.3 flask-cors==4.0.0 python-multipart==0.0.6 gunicorn==21.2.0 Werkzeug==2.3.7 click==8.1.7 itsdangerous==2.1.2 Jinja2==3.1.2 MarkupSafe==2.1.3 && \
-    pip install --no-cache-dir keystone-engine==0.9.2 unicorn==2.0.1 scapy==2.5.0 requests==2.31.0 pycryptodome==3.19.0 cryptography==41.0.3 python-magic==0.4.27 olefile==0.46 tqdm==4.66.1 colorama==0.4.6 pygments==2.16.1 rich==13.5.2 && \
-    pip install --no-cache-dir angr==9.2.86
+RUN pip install --no-cache-dir flask==2.3.3 flask-cors==4.0.0 python-multipart==0.0.6 gunicorn==21.2.0 Werkzeug==2.3.7 click==8.1.7 itsdangerous==2.1.2 Jinja2==3.1.2 MarkupSafe==2.1.3
+
+# Install analysis tools
+RUN pip install --no-cache-dir keystone-engine==0.9.2 unicorn==2.0.1 scapy==2.5.0 requests==2.31.0 pycryptodome==3.19.0 cryptography==41.0.3 python-magic==0.4.27 olefile==0.46 tqdm==4.66.1 colorama==0.4.6 pygments==2.16.1 rich==13.5.2
+
+# Install angr separately
+RUN pip install --no-cache-dir angr==9.2.86
 
 # Install additional tools from source
 RUN cd /tmp && \
